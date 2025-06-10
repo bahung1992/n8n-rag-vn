@@ -1,63 +1,54 @@
-# Docker Implementation for Vietnamese RAG Application
+# Vietnamese RAG Implementation
 
-This document provides instructions for building, running, and configuring the Vietnamese RAG application using Docker.
+A Vietnamese language Retrieval Augmented Generation (RAG) system with specialized text processing and embeddings for Vietnamese language.
 
-## Prerequisites
+## Features
 
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+- Text normalization using `underthesea`
+- Sentence segmentation
+- Word segmentation with domain-specific fixed words (optional)
+- Smart chunking strategy with configurable chunk size and overlap (default: 110 tokens with 20 token overlap)
+- Embedding generation using `bkai-foundation-models/vietnamese-bi-encoder`
+- API for processing documents and querying similar chunks
+- Caching for embeddings (optional, enabled by default)
+- Input validation to ensure chunk size and overlap constraints
 
-## Quick Start
+## Setup
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/n8n-rag-vn.git
-   cd n8n-rag-vn
+1. Clone the repository
+2. Install dependencies:
    ```
-
-2. Create a `.env` file with your configuration (or copy from `.env.example`):
-   ```bash
-   cp .env.example .env
+   pip install -r requirements.txt
    ```
-
-3. Customize the port in the `.env` file if needed:
+3. Run the application:
    ```
-   PORT=24600  # Change this to your desired port
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
    ```
+   (Note: The `--host` and `--port` are optional and default to `0.0.0.0` and `8000` respectively, as defined in `app/config.py`)
 
-4. Build and start the application using Docker Compose:
-   ```bash
-   docker compose up -d
-   ```
+## API Endpoints
 
-5. Access the API at http://localhost:${PORT}/docs (where ${PORT} is the port specified in your .env file, default is 8000)
+- `POST /api/process`: Process text documents into chunks and embeddings.  Takes a `ProcessingRequest` as input, allowing specification of `chunk_size` and `chunk_overlap`. Returns a list of `EmbeddingResponse`.
+- `POST /api/query`: Find similar chunks for a given query text. Takes a `QueryRequest` and returns a `QueryResponse`.
+- `GET /api/status`:  Get server status.
+- `GET /health`: Health check endpoint.
+- `GET /`: Root endpoint with basic application information.
 
 ## Configuration
 
-### Environment Variables
+Configuration options are managed in `app/config.py` and can be overridden using environment variables:
 
-The Docker container can be configured using the `PORT` environment variable in the `.env` file.
+- `DEBUG`: Enable debug mode (default: `False`)
+- `EMBEDDING_MODEL`:  The SentenceTransformer model to use (default: `bkai-foundation-models/vietnamese-bi-encoder`)
+- `MAX_TOKEN_LIMIT`: Maximum number of tokens per chunk (default: 128)
+- `DEFAULT_CHUNK_SIZE`: Default chunk size in tokens (default: 110)
+- `DEFAULT_CHUNK_OVERLAP`: Default chunk overlap in tokens (default: 20)
+- `DEFAULT_TOP_K`: Default number of top matches to return for a query (default: 5)
+- `ENABLE_CACHE`: Enable embedding caching (default: `True`)
+- `CACHE_SIZE`: Maximum size of the embedding cache (default: 1000)
+- `HOST`: Host address (default: `0.0.0.0`)
+- `PORT`: Port number (default: 8000)
 
-### Volumes
+## License
 
-The Docker container uses a volume to persist the downloaded models:
-
-- `huggingface_cache`: Persistent storage for downloaded models
-
-## Troubleshooting
-
-If you encounter issues with the Docker implementation, try the following:
-
-1. Check the container logs:
-   ```bash
-   docker logs vietnamese-rag-app
-   ```
-
-2. Ensure the PORT environment variable is correctly set in your `.env` file.
-
-3. If the container fails to start, try rebuilding the image:
-   ```bash
-   docker compose build --no-cache
-   docker compose up -d
-   ```
-
+[MIT License](LICENSE) 
